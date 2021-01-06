@@ -1,0 +1,10 @@
+name: ${project.artifactId}
+version: ${project.version}
+main: ravioli.gravioli.alerts.Alerts
+api-version: 1.16
+
+commands:
+  alerts:
+    usage: /alerts [add,remove] [text,id]
+    description: Command to handle addition, removal, and viewing of alerts.
+    aliases: [alert]

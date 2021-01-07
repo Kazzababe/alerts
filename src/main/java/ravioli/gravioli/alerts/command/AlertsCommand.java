@@ -22,6 +22,9 @@ import java.util.Arrays;
 import java.util.List;
 
 public class AlertsCommand implements CommandExecutor {
+    private static final String NEGATIVE_PREFIX = ChatColor.RED.toString() + ChatColor.BOLD + "! " + ChatColor.RED;
+    private static final String POSITIVE_PREFIX = ChatColor.GREEN.toString() + ChatColor.BOLD + "! " + ChatColor.GREEN;
+
     private final Alerts plugin;
 
     public AlertsCommand(Alerts plugin) {
@@ -29,35 +32,40 @@ public class AlertsCommand implements CommandExecutor {
     }
 
     @Override
-    public boolean onCommand(CommandSender commandSender, Command command, String label, String[] args) {
-        if (args.length == 0) {
-            if (commandSender instanceof Player) {
-                this.openAlertsMenu((Player) commandSender);
-            } else {
-                commandSender.sendMessage(ChatColor.translateAlternateColorCodes('&', "&c&l! &cThis command can only be sent by players."));
-            }
-        } else if (args.length >= 2) {
-            if (args[0].equalsIgnoreCase("add")) {
-                this.plugin.getAlertsManager().addAlert(StringUtils.join(Arrays.copyOfRange(args, 1, args.length), " "));
-                commandSender.sendMessage(ChatColor.translateAlternateColorCodes('&', "&a&l! &aYou have added a new alert. You can use the command &e/alerts&a to view all alerts."));
-            } else if (args[0].equalsIgnoreCase("remove") && args.length == 2) {
-                Long alertId = Longs.tryParse(args[1]);
-                if (alertId != null) {
-                    if (this.plugin.getAlertsManager().removeAlert(alertId)) {
-                        commandSender.sendMessage(ChatColor.translateAlternateColorCodes('&', "&a&l! &aYou have successfully removed this alert."));
-                    } else {
-                        commandSender.sendMessage(ChatColor.translateAlternateColorCodes('&', "&c&l! &cThere is no alert found with that id."));
-                    }
-                } else {
-                    commandSender.sendMessage(ChatColor.translateAlternateColorCodes('&', "&c&l! &cPlease input a valid number for the alert id."));
-                }
-            } else {
-                commandSender.sendMessage(ChatColor.translateAlternateColorCodes('&', "&c&l! &cInvalid command usage: /alert [add,remove] [alert,id]."));
-            }
-        } else {
-            commandSender.sendMessage(ChatColor.translateAlternateColorCodes('&', "&c&l! &cInvalid command usage: /alert [add,remove] [alert,id]."));
-        }
+    public boolean onCommand(CommandSender sender, Command _, String __, String[] args) {
+        this.handleCommand(sender, args);
         return true;
+    }
+
+    private void handleCommand(CommandSender sender, String[] args) {
+        if (args.length == 0) {
+            if (sender instanceof Player) {
+                this.openAlertsMenu((Player) sender);
+            } else {
+                sender.sendMessage(NEGATIVE_PREFIX + "This command can only be sent by players.");
+            }
+            return;
+        }
+        if (args.length == 2 && args[0].equalsIgnoreCase("remove")) {
+            Long alertId = Longs.tryParse(args[1]);
+            if (alertId == null) {
+                sender.sendMessage(NEGATIVE_PREFIX + "Please input a valid number for the alert id.");
+                return;
+            }
+            if (this.plugin.getAlertsManager().removeAlert(alertId)) {
+                sender.sendMessage(POSITIVE_PREFIX + "You have successfully removed this alert.");
+            } else {
+                sender.sendMessage(NEGATIVE_PREFIX + "There is no alert found with that id.");
+            }
+            return;
+        }
+        if (args.length >= 2 && args[0].equalsIgnoreCase("add")) {
+            this.plugin.getAlertsManager().addAlert(StringUtils.join(Arrays.copyOfRange(args, 1, args.length), " "));
+            sender.sendMessage(POSITIVE_PREFIX + "You have added a new alert. You can use the command &e/alerts&a " +
+                    "to view all alerts.");
+            return;
+        }
+        sender.sendMessage(NEGATIVE_PREFIX + "Invalid command usage: /alert [add,remove] [alert,id].");
     }
 
     private void openAlertsMenu(Player player) {
